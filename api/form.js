@@ -3,7 +3,7 @@ import nodemailer from "nodemailer";
 const ALLOWED_ORIGIN = "https://con-moto.github.io";
 
 export default async function handler(req, res) {
-  // Обработка preflight-запроса
+  // CORS preflight
   if (req.method === "OPTIONS") {
     res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -24,26 +24,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const chunks = [];
-    for await (const chunk of req) {
-      chunks.push(chunk);
-    }
-    const rawBody = Buffer.concat(chunks).toString();
-
-    const params = {};
-    rawBody.split("&").forEach((pair) => {
-      const [key, value] = pair.split("=");
-      if (!key) return;
-      const decodedKey = decodeURIComponent(key.replace(/\+/g, " "));
-      const decodedValue = decodeURIComponent((value || "").replace(/\+/g, " "));
-      if (decodedKey.endsWith("[]")) {
-        const baseKey = decodedKey.slice(0, -2);
-        if (!params[baseKey]) params[baseKey] = [];
-        params[baseKey].push(decodedValue);
-      } else {
-        params[decodedKey] = decodedValue;
-      }
-    });
+    const params = req.body || {};
 
     const form_type = params.form_type || "";
     const first_name = params.first_name || "";
@@ -53,9 +34,10 @@ export default async function handler(req, res) {
     const food_preference = params.food_preference || "";
     const child = params.child || "";
     const event = params.event || "";
-    const alcoholArray = params.alcohol || [];
-    const alcohol =
-      Array.isArray(alcoholArray) ? alcoholArray.join(", ") : alcoholArray;
+    const alcoholArray = params["alcohol[]"] || params.alcohol || [];
+    const alcohol = Array.isArray(alcoholArray)
+      ? alcoholArray.join(", ")
+      : alcoholArray || "";
 
     const subject =
       form_type === "rsvp-form"
