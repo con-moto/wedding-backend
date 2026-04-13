@@ -1,20 +1,35 @@
 import nodemailer from "nodemailer";
 
+const ALLOWED_ORIGIN = "https://con-moto.github.io";
+
 export default async function handler(req, res) {
+  // Обработка preflight-запроса
+  if (req.method === "OPTIONS") {
+    res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Accept"
+    );
+    res.status(200).end();
+    return;
+  }
+
   if (req.method !== "POST") {
-    res.status(405).json({ success: false, message: "Method not allowed" });
+    res
+      .status(405)
+      .setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN)
+      .json({ success: false, message: "Method not allowed" });
     return;
   }
 
   try {
-    // Читаем сырой body (form-urlencoded / multipart)
     const chunks = [];
     for await (const chunk of req) {
       chunks.push(chunk);
     }
     const rawBody = Buffer.concat(chunks).toString();
 
-    // Простенький парсер x-www-form-urlencoded
     const params = {};
     rawBody.split("&").forEach((pair) => {
       const [key, value] = pair.split("=");
@@ -70,7 +85,6 @@ export default async function handler(req, res) {
       },
     });
 
-    // выбор адреса получателя
     let toAddress = process.env.MAIL_TO || "";
 
     if (form_type === "rsvp-form" && process.env.MAIL_TO_RSVP) {
@@ -86,14 +100,18 @@ export default async function handler(req, res) {
       text: textLines.join("\n"),
     });
 
-    res.status(200).json({
-      success: true,
-      message: "Спасибо! Форма отправлена.",
-    });
+    res
+      .status(200)
+      .setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN)
+      .json({
+        success: true,
+        message: "Спасибо! Форма отправлена.",
+      });
   } catch (error) {
     console.error(error);
     res
       .status(500)
+      .setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN)
       .json({ success: false, message: "Ошибка на сервере." });
   }
 }
