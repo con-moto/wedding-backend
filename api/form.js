@@ -7,10 +7,7 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") {
     res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Accept"
-    );
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Accept");
     res.status(200).end();
     return;
   }
@@ -32,8 +29,9 @@ export default async function handler(req, res) {
     const attendance = params.attendance || "";
     const message = params.message || "";
     const food_preference = params.food_preference || "";
-    const child = params.child || "";
     const event = params.event || "";
+    const song = params.song || ""; // новое поле из details-form
+
     const alcoholArray = params["alcohol[]"] || params.alcohol || [];
     const alcohol = Array.isArray(alcoholArray)
       ? alcoholArray.join(", ")
@@ -52,7 +50,7 @@ export default async function handler(req, res) {
       `Присутствие: ${attendance}`,
       `Питание: ${food_preference}`,
       `Алкоголь: ${alcohol}`,
-      `Ребёнок: ${child}`,
+      `Желаемая песня: ${song}`,
       `Комментарий: ${message}`,
       `Дата: ${new Date().toISOString()}`,
     ];
